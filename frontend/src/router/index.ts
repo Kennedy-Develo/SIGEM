@@ -22,6 +22,15 @@ const router = createRouter({
       },
     },
     {
+      path: '/solicitar-acesso',
+      name: 'register',
+      component: () => import('@/views/auth/RegisterView.vue'),
+      meta: {
+        title: 'Solicitar acesso | SIGEM',
+        guestOnly: true,
+      },
+    },
+    {
       path: '/dashboard',
       name: 'dashboard',
       component: () => import('@/views/DashboardView.vue'),

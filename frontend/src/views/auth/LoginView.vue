@@ -173,7 +173,13 @@ async function handleLogin(): Promise<void> {
       <div class="login-card__request">
         <p>Ainda não possui acesso?</p>
 
-        <v-btn variant="tonal" color="secondary" block prepend-icon="mdi-account-plus-outline">
+        <v-btn
+          :to="{ name: 'register' }"
+          variant="tonal"
+          color="secondary"
+          block
+          prepend-icon="mdi-account-plus-outline"
+        >
           Solicitar cadastro
         </v-btn>
       </div>

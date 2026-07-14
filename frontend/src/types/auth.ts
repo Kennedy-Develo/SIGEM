@@ -26,3 +26,15 @@ export interface LoginResponse {
   message: string
   user: AuthUser
 }
+
+export interface RegisterCredentials {
+  name: string
+  email: string
+  password: string
+  password_confirmation: string
+}
+
+export interface RegisterResponse {
+  message: string
+  user: Pick<AuthUser, 'id' | 'name' | 'email' | 'role' | 'status'>
+}

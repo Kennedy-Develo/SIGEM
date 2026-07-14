@@ -3,7 +3,13 @@ import { defineStore } from 'pinia'
 
 import http from '@/services/http'
 
-import type { AuthUser, LoginCredentials, LoginResponse } from '@/types/auth'
+import type {
+  AuthUser,
+  LoginCredentials,
+  LoginResponse,
+  RegisterCredentials,
+  RegisterResponse,
+} from '@/types/auth'
 
 export const useAuthStore = defineStore('auth', () => {
   const user = ref<AuthUser | null>(null)
@@ -25,6 +31,20 @@ export const useAuthStore = defineStore('auth', () => {
       initialized.value = true
 
       return response.data.user
+    } finally {
+      loading.value = false
+    }
+  }
+
+  async function register(credentials: RegisterCredentials): Promise<RegisterResponse> {
+    loading.value = true
+
+    try {
+      await http.get('/sanctum/csrf-cookie')
+
+      const response = await http.post<RegisterResponse>('/register', credentials)
+
+      return response.data
     } finally {
       loading.value = false
     }
@@ -68,6 +88,7 @@ export const useAuthStore = defineStore('auth', () => {
     isAuthenticated,
     isAdministrator,
     login,
+    register,
     fetchUser,
     logout,
   }
