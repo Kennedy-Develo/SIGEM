@@ -1,12 +1,70 @@
 <script setup lang="ts">
+import axios from 'axios'
 import { ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 
 import AuthLayout from '@/layouts/AuthLayout.vue'
+import { useAuthStore } from '@/stores/auth'
 
+interface ErrorResponse {
+  message?: string
+  errors?: Record<string, string[]>
+}
+
+const route = useRoute()
+const router = useRouter()
+const auth = useAuthStore()
+
+const formValid = ref(false)
 const email = ref('')
 const password = ref('')
 const remember = ref(false)
 const showPassword = ref(false)
+const errorMessage = ref('')
+
+const emailRules = [
+  (value: string) => Boolean(value) || 'Informe seu e-mail.',
+  (value: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value) || 'Informe um e-mail válido.',
+]
+
+const passwordRules = [(value: string) => Boolean(value) || 'Informe sua senha.']
+
+function resolveErrorMessage(error: unknown): string {
+  if (!axios.isAxiosError<ErrorResponse>(error)) {
+    return 'Não foi possível entrar. Tente novamente.'
+  }
+
+  const response = error.response?.data
+  const validationMessage = response?.errors?.email?.[0]
+
+  return (
+    validationMessage ?? response?.message ?? 'Não foi possível entrar. Verifique suas credenciais.'
+  )
+}
+
+async function handleLogin(): Promise<void> {
+  errorMessage.value = ''
+
+  if (!formValid.value) {
+    errorMessage.value = 'Preencha corretamente o e-mail e a senha.'
+
+    return
+  }
+
+  try {
+    await auth.login({
+      email: email.value.trim().toLowerCase(),
+      password: password.value,
+      remember: remember.value,
+    })
+
+    const redirect = typeof route.query.redirect === 'string' ? route.query.redirect : '/dashboard'
+
+    await router.replace(redirect)
+  } catch (error) {
+    errorMessage.value = resolveErrorMessage(error)
+  }
+}
 </script>
 
 <template>
@@ -18,7 +76,9 @@ const showPassword = ref(false)
         </div>
 
         <p class="login-card__eyebrow">Acesso ao sistema</p>
+
         <h2 class="login-card__title">Bem-vindo de volta</h2>
+
         <p class="login-card__subtitle">Entre com suas credenciais para acessar o SIGEM.</p>
       </div>
 
@@ -32,24 +92,38 @@ const showPassword = ref(false)
         Ambiente seguro e de acesso restrito.
       </v-alert>
 
-      <v-form @submit.prevent>
+      <v-alert
+        v-if="errorMessage"
+        type="error"
+        variant="tonal"
+        density="comfortable"
+        closable
+        class="mb-6"
+        @click:close="errorMessage = ''"
+      >
+        {{ errorMessage }}
+      </v-alert>
+
+      <v-form v-model="formValid" :disabled="auth.loading" @submit.prevent="handleLogin">
         <div class="field-group">
-          <label class="field-label" for="email">E-mail institucional</label>
+          <label class="field-label" for="email"> E-mail institucional </label>
 
           <v-text-field
             id="email"
             v-model="email"
+            :rules="emailRules"
             type="email"
             placeholder="nome@instituicao.gov.br"
             prepend-inner-icon="mdi-email-outline"
             autocomplete="username"
             hide-details="auto"
+            required
           />
         </div>
 
         <div class="field-group">
           <div class="field-label-row">
-            <label class="field-label" for="password">Senha</label>
+            <label class="field-label" for="password"> Senha </label>
 
             <button class="forgot-password" type="button">Esqueci minha senha</button>
           </div>
@@ -57,12 +131,14 @@ const showPassword = ref(false)
           <v-text-field
             id="password"
             v-model="password"
+            :rules="passwordRules"
             :type="showPassword ? 'text' : 'password'"
             placeholder="Digite sua senha"
             prepend-inner-icon="mdi-lock-outline"
             :append-inner-icon="showPassword ? 'mdi-eye-off-outline' : 'mdi-eye-outline'"
             autocomplete="current-password"
             hide-details="auto"
+            required
             @click:append-inner="showPassword = !showPassword"
           />
         </div>
@@ -82,6 +158,7 @@ const showPassword = ref(false)
           size="large"
           block
           prepend-icon="mdi-arrow-right-circle-outline"
+          :loading="auth.loading"
         >
           Entrar
         </v-btn>
