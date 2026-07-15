@@ -7,12 +7,6 @@ const router = createRouter({
 
   routes: [
     {
-      path: '/',
-      redirect: {
-        name: 'dashboard',
-      },
-    },
-    {
       path: '/login',
       name: 'login',
       component: () => import('@/views/auth/LoginView.vue'),
@@ -31,13 +25,36 @@ const router = createRouter({
       },
     },
     {
-      path: '/dashboard',
-      name: 'dashboard',
-      component: () => import('@/views/DashboardView.vue'),
+      path: '/',
+      component: () => import('@/layouts/AppLayout.vue'),
       meta: {
-        title: 'Painel | SIGEM',
         requiresAuth: true,
       },
+      children: [
+        {
+          path: '',
+          redirect: {
+            name: 'dashboard',
+          },
+        },
+        {
+          path: 'dashboard',
+          name: 'dashboard',
+          component: () => import('@/views/DashboardView.vue'),
+          meta: {
+            title: 'Painel | SIGEM',
+          },
+        },
+        {
+          path: 'administracao/usuarios',
+          name: 'admin-users',
+          component: () => import('@/views/admin/UsersView.vue'),
+          meta: {
+            title: 'Gestão de usuários | SIGEM',
+            requiresAdmin: true,
+          },
+        },
+      ],
     },
   ],
 })
@@ -49,12 +66,22 @@ router.beforeEach(async (to) => {
     await auth.fetchUser()
   }
 
-  if (to.meta.requiresAuth && !auth.isAuthenticated) {
+  const requiresAuth = to.matched.some((route) => route.meta.requiresAuth)
+
+  const requiresAdmin = to.matched.some((route) => route.meta.requiresAdmin)
+
+  if (requiresAuth && !auth.isAuthenticated) {
     return {
       name: 'login',
       query: {
         redirect: to.fullPath,
       },
+    }
+  }
+
+  if (requiresAdmin && !auth.isAdministrator) {
+    return {
+      name: 'dashboard',
     }
   }
 
