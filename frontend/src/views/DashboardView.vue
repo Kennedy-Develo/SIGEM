@@ -1,7 +1,16 @@
 <script setup lang="ts">
 import { useAuthStore } from '@/stores/auth'
 
+import type { UserRole } from '@/types/auth'
+
 const auth = useAuthStore()
+
+const roleLabels: Record<UserRole, string> = {
+  administrator: 'Administrador',
+  manager: 'Gestor',
+  operator: 'Operador',
+  reader: 'Leitor',
+}
 </script>
 
 <template>
@@ -74,7 +83,7 @@ const auth = useAuthStore()
           <p class="metric-card__label">Seu perfil</p>
 
           <strong class="metric-card__profile">
-            {{ auth.isAdministrator ? 'Administrador' : 'Usuário' }}
+            {{ auth.user ? roleLabels[auth.user.role] : '—' }}
           </strong>
 
           <span class="metric-card__detail"> Acesso controlado por perfil </span>
@@ -110,7 +119,9 @@ const auth = useAuthStore()
 
             <v-list-item prepend-icon="mdi-check-circle" title="Perfis e status de acesso" />
 
-            <v-list-item prepend-icon="mdi-progress-clock" title="Gestão visual de usuários" />
+            <v-list-item prepend-icon="mdi-check-circle" title="Gestão visual de usuários" />
+
+            <v-list-item prepend-icon="mdi-check-circle" title="Recuperação segura de senha" />
           </v-list>
         </v-card>
       </v-col>
@@ -269,10 +280,6 @@ const auth = useAuthStore()
 
 .foundation-list :deep(.v-icon) {
   color: #16a34a;
-}
-
-.foundation-list :deep(.v-list-item:last-child .v-icon) {
-  color: #d97706;
 }
 
 @media (max-width: 700px) {
