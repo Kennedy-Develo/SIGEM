@@ -38,3 +38,22 @@ export interface RegisterResponse {
   message: string
   user: Pick<AuthUser, 'id' | 'name' | 'email' | 'role' | 'status'>
 }
+
+export interface ForgotPasswordCredentials {
+  email: string
+}
+
+export interface ForgotPasswordResponse {
+  message: string
+}
+
+export interface ResetPasswordCredentials {
+  token: string
+  email: string
+  password: string
+  password_confirmation: string
+}
+
+export interface ResetPasswordResponse {
+  message: string
+}

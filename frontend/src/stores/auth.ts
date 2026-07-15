@@ -5,10 +5,14 @@ import http from '@/services/http'
 
 import type {
   AuthUser,
+  ForgotPasswordCredentials,
+  ForgotPasswordResponse,
   LoginCredentials,
   LoginResponse,
   RegisterCredentials,
   RegisterResponse,
+  ResetPasswordCredentials,
+  ResetPasswordResponse,
 } from '@/types/auth'
 
 export const useAuthStore = defineStore('auth', () => {
@@ -43,6 +47,38 @@ export const useAuthStore = defineStore('auth', () => {
       await http.get('/sanctum/csrf-cookie')
 
       const response = await http.post<RegisterResponse>('/register', credentials)
+
+      return response.data
+    } finally {
+      loading.value = false
+    }
+  }
+
+  async function requestPasswordReset(
+    credentials: ForgotPasswordCredentials,
+  ): Promise<ForgotPasswordResponse> {
+    loading.value = true
+
+    try {
+      await http.get('/sanctum/csrf-cookie')
+
+      const response = await http.post<ForgotPasswordResponse>('/forgot-password', credentials)
+
+      return response.data
+    } finally {
+      loading.value = false
+    }
+  }
+
+  async function resetPassword(
+    credentials: ResetPasswordCredentials,
+  ): Promise<ResetPasswordResponse> {
+    loading.value = true
+
+    try {
+      await http.get('/sanctum/csrf-cookie')
+
+      const response = await http.post<ResetPasswordResponse>('/reset-password', credentials)
 
       return response.data
     } finally {
@@ -89,6 +125,8 @@ export const useAuthStore = defineStore('auth', () => {
     isAdministrator,
     login,
     register,
+    requestPasswordReset,
+    resetPassword,
     fetchUser,
     logout,
   }

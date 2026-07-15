@@ -25,6 +25,24 @@ const router = createRouter({
       },
     },
     {
+      path: '/esqueci-minha-senha',
+      name: 'forgot-password',
+      component: () => import('@/views/auth/ForgotPasswordView.vue'),
+      meta: {
+        title: 'Recuperar senha | SIGEM',
+        guestOnly: true,
+      },
+    },
+    {
+      path: '/redefinir-senha',
+      name: 'reset-password',
+      component: () => import('@/views/auth/ResetPasswordView.vue'),
+      meta: {
+        title: 'Redefinir senha | SIGEM',
+        guestOnly: true,
+      },
+    },
+    {
       path: '/',
       component: () => import('@/layouts/AppLayout.vue'),
       meta: {

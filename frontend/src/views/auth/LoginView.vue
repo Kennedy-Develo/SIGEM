@@ -125,7 +125,13 @@ async function handleLogin(): Promise<void> {
           <div class="field-label-row">
             <label class="field-label" for="password"> Senha </label>
 
-            <button class="forgot-password" type="button">Esqueci minha senha</button>
+            <button
+              class="forgot-password"
+              type="button"
+              @click="router.push({ name: 'forgot-password' })"
+            >
+              Esqueci minha senha
+            </button>
           </div>
 
           <v-text-field
