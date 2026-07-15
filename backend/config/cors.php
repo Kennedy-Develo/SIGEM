@@ -5,6 +5,8 @@ return [
         'api/*',
         'register',
         'login',
+        'forgot-password',
+        'reset-password',
         'logout',
         'sanctum/csrf-cookie',
     ],
