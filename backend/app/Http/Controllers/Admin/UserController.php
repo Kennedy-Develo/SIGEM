@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\AuditAction;
 use App\Enums\UserRole;
 use App\Enums\UserStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\UpdateUserAccessRequest;
 use App\Models\User;
+use App\Services\AuditLogger;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -15,6 +17,10 @@ use Illuminate\Validation\Rule;
 
 class UserController extends Controller
 {
+    public function __construct(
+        private readonly AuditLogger $auditLogger,
+    ) {}
+
     /**
      * List users for administrative management.
      */
@@ -53,11 +59,21 @@ class UserController extends Controller
             ->when(
                 $filters['search'] ?? null,
                 function (Builder $query, string $search): void {
-                    $query->where(function (Builder $query) use ($search): void {
-                        $query
-                            ->where('name', 'like', "%{$search}%")
-                            ->orWhere('email', 'like', "%{$search}%");
-                    });
+                    $query->where(
+                        function (Builder $query) use ($search): void {
+                            $query
+                                ->where(
+                                    'name',
+                                    'like',
+                                    "%{$search}%",
+                                )
+                                ->orWhere(
+                                    'email',
+                                    'like',
+                                    "%{$search}%",
+                                );
+                        },
+                    );
                 },
             )
             ->when(
@@ -96,6 +112,7 @@ class UserController extends Controller
         UpdateUserAccessRequest $request,
         User $user,
     ): JsonResponse {
+        /** @var User $administrator */
         $administrator = $request->user();
 
         if ($administrator->is($user)) {
@@ -107,36 +124,98 @@ class UserController extends Controller
         $data = $request->validated();
         $status = UserStatus::from($data['status']);
 
-        $attributes = [
-            'role' => UserRole::from($data['role']),
-            'status' => $status,
-        ];
+        $oldValues = $this->accessValues($user);
 
-        if ($status === UserStatus::Active) {
-            $attributes['approved_by'] = $administrator->id;
-            $attributes['approved_at'] = $user->approved_at ?? now();
-            $attributes['blocked_at'] = null;
-        }
+        $updatedUser = DB::transaction(
+            function () use (
+                $administrator,
+                $data,
+                $status,
+                $user,
+                $oldValues,
+            ): User {
+                $attributes = [
+                    'role' => UserRole::from($data['role']),
+                    'status' => $status,
+                ];
 
-        if ($status === UserStatus::Blocked) {
-            $attributes['blocked_at'] = now();
-        }
+                if ($status === UserStatus::Active) {
+                    $attributes['approved_by'] = $administrator->id;
+                    $attributes['approved_at'] = $user->approved_at ?? now();
+                    $attributes['blocked_at'] = null;
+                }
 
-        $user->forceFill($attributes)->save();
+                if ($status === UserStatus::Blocked) {
+                    $attributes['blocked_at'] = now();
+                }
 
-        if ($status === UserStatus::Blocked) {
-            $user->tokens()->delete();
+                $user->forceFill($attributes)->save();
 
-            if (config('session.driver') === 'database') {
-                DB::table(config('session.table', 'sessions'))
-                    ->where('user_id', $user->id)
-                    ->delete();
-            }
-        }
+                if ($status === UserStatus::Blocked) {
+                    $user->tokens()->delete();
+
+                    if (config('session.driver') === 'database') {
+                        DB::table(
+                            config(
+                                'session.table',
+                                'sessions',
+                            ),
+                        )
+                            ->where('user_id', $user->id)
+                            ->delete();
+                    }
+                }
+
+                /** @var User $freshUser */
+                $freshUser = $user->fresh();
+
+                $newValues = $this->accessValues($freshUser);
+
+                $changedFields = array_keys(
+                    array_filter(
+                        $newValues,
+                        static fn (
+                            mixed $value,
+                            string $field,
+                        ): bool => $oldValues[$field] !== $value,
+                        ARRAY_FILTER_USE_BOTH,
+                    ),
+                );
+
+                $this->auditLogger->record(
+                    action: AuditAction::UserAccessUpdated,
+                    subject: $freshUser,
+                    actor: $administrator,
+                    oldValues: $oldValues,
+                    newValues: $newValues,
+                    metadata: [
+                        'changed_fields' => $changedFields,
+                    ],
+                );
+
+                return $freshUser;
+            },
+        );
 
         return response()->json([
             'message' => 'Acesso do usuário atualizado com sucesso.',
-            'user' => $user->fresh()->load('approver:id,name'),
+            'user' => $updatedUser->load('approver:id,name'),
         ]);
+    }
+
+    /**
+     * Return the access data stored in the audit record.
+     *
+     * @return array<string, mixed>
+     */
+    private function accessValues(User $user): array
+    {
+        return [
+            'role' => $user->role->value,
+            'status' => $user->status->value,
+            'approved_by' => $user->approved_by,
+            'approved_at' => $user->approved_at?->toISOString(),
+            'blocked_at' => $user->blocked_at?->toISOString(),
+        ];
     }
 }
