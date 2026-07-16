@@ -72,6 +72,15 @@ const router = createRouter({
             requiresAdmin: true,
           },
         },
+        {
+          path: 'administracao/auditoria',
+          name: 'admin-audit',
+          component: () => import('@/views/admin/AuditLogsView.vue'),
+          meta: {
+            title: 'Histórico de auditoria | SIGEM',
+            requiresAdmin: true,
+          },
+        },
       ],
     },
   ],

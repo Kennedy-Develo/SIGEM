@@ -64,6 +64,7 @@ async function handleLogout(): Promise<void> {
 
       <div>
         <p class="brand__name">SIGEM</p>
+
         <p class="brand__description">Gestão de Manifestações</p>
       </div>
     </div>
@@ -88,6 +89,13 @@ async function handleLogout(): Promise<void> {
           :to="{ name: 'admin-users' }"
           prepend-icon="mdi-account-group-outline"
           title="Usuários"
+          rounded="lg"
+        />
+
+        <v-list-item
+          :to="{ name: 'admin-audit' }"
+          prepend-icon="mdi-clipboard-text-clock-outline"
+          title="Auditoria"
           rounded="lg"
         />
       </template>
@@ -117,6 +125,7 @@ async function handleLogout(): Promise<void> {
     <div class="user-summary">
       <div class="user-summary__text">
         <strong>{{ auth.user?.name }}</strong>
+
         <span>{{ userRoleLabel }}</span>
       </div>
 
