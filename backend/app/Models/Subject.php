@@ -28,6 +28,11 @@ class Subject extends Model
         return $this->hasMany(Subsubject::class);
     }
 
+    public function manifestations(): HasMany
+    {
+        return $this->hasMany(Manifestation::class);
+    }
+
     public function scopeActive(Builder $query): Builder
     {
         return $query->where('active', true);

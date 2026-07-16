@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Subsubject extends Model
 {
@@ -27,6 +28,11 @@ class Subsubject extends Model
     public function subject(): BelongsTo
     {
         return $this->belongsTo(Subject::class);
+    }
+
+    public function manifestations(): HasMany
+    {
+        return $this->hasMany(Manifestation::class);
     }
 
     public function scopeActive(Builder $query): Builder

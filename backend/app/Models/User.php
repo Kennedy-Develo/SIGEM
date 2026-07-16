@@ -20,7 +20,7 @@ class User extends Authenticatable
     use HasApiTokens, HasFactory, Notifiable;
 
     /**
-     * Usuário administrador que aprovou esta conta.
+     * Administrador que aprovou esta conta.
      */
     public function approver(): BelongsTo
     {
@@ -33,6 +33,72 @@ class User extends Authenticatable
     public function approvedUsers(): HasMany
     {
         return $this->hasMany(self::class, 'approved_by');
+    }
+
+    /**
+     * Manifestações atualmente atribuídas ao usuário.
+     */
+    public function currentManifestations(): HasMany
+    {
+        return $this->hasMany(
+            Manifestation::class,
+            'current_assignee_id',
+        );
+    }
+
+    /**
+     * Manifestações cadastradas pelo usuário.
+     */
+    public function createdManifestations(): HasMany
+    {
+        return $this->hasMany(
+            Manifestation::class,
+            'created_by_id',
+        );
+    }
+
+    /**
+     * Manifestações atualizadas pelo usuário.
+     */
+    public function updatedManifestations(): HasMany
+    {
+        return $this->hasMany(
+            Manifestation::class,
+            'updated_by_id',
+        );
+    }
+
+    /**
+     * Histórico de manifestações atribuídas ao usuário.
+     */
+    public function manifestationAssignments(): HasMany
+    {
+        return $this->hasMany(
+            ManifestationAssignment::class,
+            'assignee_id',
+        );
+    }
+
+    /**
+     * Atribuições realizadas pelo usuário.
+     */
+    public function assignmentsMade(): HasMany
+    {
+        return $this->hasMany(
+            ManifestationAssignment::class,
+            'assigned_by_id',
+        );
+    }
+
+    /**
+     * Atribuições encerradas pelo usuário.
+     */
+    public function assignmentsEnded(): HasMany
+    {
+        return $this->hasMany(
+            ManifestationAssignment::class,
+            'ended_by_id',
+        );
     }
 
     /**
@@ -52,7 +118,7 @@ class User extends Authenticatable
     }
 
     /**
-     * Get the attributes that should be cast.
+     * Define as conversões automáticas dos atributos.
      *
      * @return array<string, string>
      */

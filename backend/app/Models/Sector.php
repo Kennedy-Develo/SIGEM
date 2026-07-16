@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Sector extends Model
 {
@@ -21,6 +22,11 @@ class Sector extends Model
         return [
             'active' => 'boolean',
         ];
+    }
+
+    public function manifestations(): HasMany
+    {
+        return $this->hasMany(Manifestation::class);
     }
 
     public function scopeActive(Builder $query): Builder
