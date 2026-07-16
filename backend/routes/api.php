@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\AuditLogController;
 use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Manifestation\ManifestationController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -9,6 +10,11 @@ Route::middleware('auth:sanctum')->group(function (): void {
     Route::get('/user', function (Request $request) {
         return $request->user();
     });
+
+    Route::post('/manifestations', [
+        ManifestationController::class,
+        'store',
+    ])->name('manifestations.store');
 
     Route::prefix('admin')
         ->middleware('admin')
