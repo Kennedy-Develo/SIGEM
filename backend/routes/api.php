@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\AuditLogController;
 use App\Http\Controllers\Admin\UserController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -21,5 +22,10 @@ Route::middleware('auth:sanctum')->group(function (): void {
                 UserController::class,
                 'update',
             ])->name('admin.users.update');
+
+            Route::get('/audit-logs', [
+                AuditLogController::class,
+                'index',
+            ])->name('admin.audit-logs.index');
         });
 });
