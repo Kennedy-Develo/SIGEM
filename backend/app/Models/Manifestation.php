@@ -23,6 +23,7 @@ class Manifestation extends Model
         'subject_id',
         'subsubject_id',
         'sector_id',
+        'conclusion_responsible_area',
         'current_assignee_id',
         'created_by_id',
         'updated_by_id',
@@ -67,6 +68,9 @@ class Manifestation extends Model
         return $this->belongsTo(Subsubject::class);
     }
 
+    /**
+     * Tag ou setor atualmente responsável pela manifestação.
+     */
     public function sector(): BelongsTo
     {
         return $this->belongsTo(Sector::class);

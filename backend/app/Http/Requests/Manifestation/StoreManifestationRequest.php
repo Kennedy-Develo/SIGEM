@@ -58,7 +58,10 @@ class StoreManifestationRequest extends FormRequest
                 'integer',
                 Rule::exists('subsubjects', 'id')
                     ->where('active', true)
-                    ->where('subject_id', $this->integer('subject_id')),
+                    ->where(
+                        'subject_id',
+                        $this->integer('subject_id'),
+                    ),
             ],
             'sector_id' => [
                 'required',
@@ -66,11 +69,19 @@ class StoreManifestationRequest extends FormRequest
                 Rule::exists('sectors', 'id')
                     ->where('active', true),
             ],
+            'conclusion_responsible_area' => [
+                'nullable',
+                'string',
+                'max:255',
+            ],
             'current_assignee_id' => [
                 'nullable',
                 'integer',
                 Rule::exists('users', 'id')
-                    ->where('status', UserStatus::Active->value),
+                    ->where(
+                        'status',
+                        UserStatus::Active->value,
+                    ),
             ],
             'summary' => [
                 'nullable',
@@ -122,10 +133,13 @@ class StoreManifestationRequest extends FormRequest
             'subsubject_id.required' => 'Selecione o subassunto.',
             'subsubject_id.exists' => 'O subassunto selecionado não pertence ao assunto informado ou está inativo.',
 
-            'sector_id.required' => 'Selecione o setor responsável.',
-            'sector_id.exists' => 'O setor selecionado é inválido ou está inativo.',
+            'sector_id.required' => 'Selecione a Tag ou o setor.',
+            'sector_id.exists' => 'A Tag ou o setor selecionado é inválido ou está inativo.',
 
-            'current_assignee_id.exists' => 'O responsável selecionado é inválido ou não está ativo.',
+            'conclusion_responsible_area.string' => 'A área responsável pela resposta conclusiva deve ser um texto.',
+            'conclusion_responsible_area.max' => 'A área responsável pela resposta conclusiva não pode ultrapassar 255 caracteres.',
+
+            'current_assignee_id.exists' => 'O respondente selecionado é inválido ou não está ativo.',
 
             'summary.max' => 'O resumo não pode ultrapassar 255 caracteres.',
             'description.max' => 'A descrição não pode ultrapassar 10.000 caracteres.',
@@ -145,7 +159,11 @@ class StoreManifestationRequest extends FormRequest
     {
         if (is_string($this->nup)) {
             $this->merge([
-                'nup' => preg_replace('/\D/', '', $this->nup),
+                'nup' => preg_replace(
+                    '/\D/',
+                    '',
+                    $this->nup,
+                ),
             ]);
         }
     }

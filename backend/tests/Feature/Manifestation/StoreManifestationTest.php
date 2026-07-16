@@ -65,6 +65,10 @@ class StoreManifestationTest extends TestCase
             ->assertJsonPath(
                 'manifestation.type',
                 ManifestationType::Request->value,
+            )
+            ->assertJsonPath(
+                'manifestation.conclusion_responsible_area',
+                $payload['conclusion_responsible_area'],
             );
 
         $this->assertDatabaseHas('manifestations', [
@@ -73,6 +77,7 @@ class StoreManifestationTest extends TestCase
             'created_by_id' => $operator->id,
             'updated_by_id' => $operator->id,
             'current_assignee_id' => $payload['current_assignee_id'],
+            'conclusion_responsible_area' => $payload['conclusion_responsible_area'],
         ]);
 
         $manifestation = Manifestation::query()
@@ -151,7 +156,11 @@ class StoreManifestationTest extends TestCase
         $payload = $this->validPayload();
 
         $otherSubsubject = Subsubject::query()
-            ->where('subject_id', '!=', $payload['subject_id'])
+            ->where(
+                'subject_id',
+                '!=',
+                $payload['subject_id'],
+            )
             ->where('active', true)
             ->firstOrFail();
 
@@ -254,6 +263,7 @@ class StoreManifestationTest extends TestCase
             'subject_id' => $subject->id,
             'subsubject_id' => $subsubject->id,
             'sector_id' => $sector->id,
+            'conclusion_responsible_area' => 'Coordenação responsável pela elaboração da resposta final.',
             'current_assignee_id' => $assignee->id,
             'summary' => 'Solicitação de informação institucional.',
             'description' => 'Manifestação cadastrada pela API do SIGEM.',
