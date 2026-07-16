@@ -17,6 +17,11 @@ Route::middleware('auth:sanctum')->group(function (): void {
         ManifestationCatalogController::class,
     )->name('manifestations.catalogs');
 
+    Route::get('/manifestations', [
+        ManifestationController::class,
+        'index',
+    ])->name('manifestations.index');
+
     Route::post('/manifestations', [
         ManifestationController::class,
         'store',
