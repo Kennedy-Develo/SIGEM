@@ -27,6 +27,16 @@ Route::middleware('auth:sanctum')->group(function (): void {
         'store',
     ])->name('manifestations.store');
 
+    Route::get('/manifestations/{manifestation}', [
+        ManifestationController::class,
+        'show',
+    ])->name('manifestations.show');
+
+    Route::patch('/manifestations/{manifestation}', [
+        ManifestationController::class,
+        'update',
+    ])->name('manifestations.update');
+
     Route::prefix('admin')
         ->middleware('admin')
         ->group(function (): void {
