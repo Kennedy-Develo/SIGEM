@@ -64,6 +64,14 @@ const router = createRouter({
           },
         },
         {
+          path: 'manifestacoes',
+          name: 'manifestations',
+          component: () => import('@/views/manifestations/ManifestationsView.vue'),
+          meta: {
+            title: 'Manifestações | SIGEM',
+          },
+        },
+        {
           path: 'administracao/usuarios',
           name: 'admin-users',
           component: () => import('@/views/admin/UsersView.vue'),

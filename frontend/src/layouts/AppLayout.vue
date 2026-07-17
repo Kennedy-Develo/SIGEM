@@ -71,15 +71,24 @@ async function handleLogout(): Promise<void> {
 
     <v-divider class="mb-3" />
 
-    <v-list nav density="comfortable" class="px-3">
+    <v-list class="px-3" density="comfortable" nav>
       <v-list-subheader class="menu-subheader"> Visão geral </v-list-subheader>
 
       <v-list-item
         :to="{ name: 'dashboard' }"
-        prepend-icon="mdi-view-dashboard-outline"
-        title="Painel"
-        rounded="lg"
         exact
+        prepend-icon="mdi-view-dashboard-outline"
+        rounded="lg"
+        title="Painel"
+      />
+
+      <v-list-subheader class="menu-subheader mt-4"> Operação </v-list-subheader>
+
+      <v-list-item
+        :to="{ name: 'manifestations' }"
+        prepend-icon="mdi-file-document-multiple-outline"
+        rounded="lg"
+        title="Manifestações"
       />
 
       <template v-if="auth.isAdministrator">
@@ -88,15 +97,15 @@ async function handleLogout(): Promise<void> {
         <v-list-item
           :to="{ name: 'admin-users' }"
           prepend-icon="mdi-account-group-outline"
-          title="Usuários"
           rounded="lg"
+          title="Usuários"
         />
 
         <v-list-item
           :to="{ name: 'admin-audit' }"
           prepend-icon="mdi-clipboard-text-clock-outline"
-          title="Auditoria"
           rounded="lg"
+          title="Auditoria"
         />
       </template>
     </v-list>
@@ -105,10 +114,10 @@ async function handleLogout(): Promise<void> {
       <div class="drawer-footer pa-4">
         <v-btn
           :loading="auth.loading"
-          variant="tonal"
+          block
           color="white"
           prepend-icon="mdi-logout"
-          block
+          variant="tonal"
           @click="handleLogout"
         >
           Sair do sistema
@@ -117,7 +126,7 @@ async function handleLogout(): Promise<void> {
     </template>
   </v-navigation-drawer>
 
-  <v-app-bar color="surface" elevation="0" border>
+  <v-app-bar border color="surface" elevation="0">
     <v-app-bar-nav-icon aria-label="Abrir ou fechar menu" @click="drawer = !drawer" />
 
     <v-app-bar-title class="app-title"> Sistema de Gestão de Manifestações </v-app-bar-title>
