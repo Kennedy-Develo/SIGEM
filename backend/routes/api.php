@@ -37,6 +37,11 @@ Route::middleware('auth:sanctum')->group(function (): void {
         'update',
     ])->name('manifestations.update');
 
+    Route::post('/manifestations/{manifestation}/transition', [
+        ManifestationController::class,
+        'transition'])
+        ->name('manifestations.transition');
+
     Route::prefix('admin')
         ->middleware('admin')
         ->group(function (): void {

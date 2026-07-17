@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers\Manifestation;
 
+use App\Enums\ManifestationLifecycleAction;
 use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Manifestation\ListManifestationsRequest;
 use App\Http\Requests\Manifestation\StoreManifestationRequest;
+use App\Http\Requests\Manifestation\TransitionManifestationRequest;
 use App\Http\Requests\Manifestation\UpdateManifestationRequest;
 use App\Models\Manifestation;
 use App\Models\User;
@@ -130,5 +132,31 @@ class ManifestationController extends Controller
             403,
             'Você não possui permissão para visualizar esta manifestação.',
         );
+    }
+
+    public function transition(
+        TransitionManifestationRequest $request,
+        Manifestation $manifestation,
+    ): JsonResponse {
+        $actor = $request->user();
+
+        if (! $actor instanceof User) {
+            abort(401, 'Usuário não autenticado.');
+        }
+
+        $validated = $request->validated();
+
+        $action = ManifestationLifecycleAction::from($validated['action']);
+
+        $manifestation = $this->manifestationService->transition(
+            $manifestation,
+            $validated,
+            $actor,
+        );
+
+        return response()->json([
+            'message' => $action->label().' realizada com sucesso.',
+            'manifestation' => $manifestation,
+        ]);
     }
 }
