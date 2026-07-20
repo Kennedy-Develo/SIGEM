@@ -11,6 +11,8 @@ import type {
   ManifestationListResponse,
   StoreManifestationPayload,
   StoreManifestationResponse,
+  TransitionManifestationPayload,
+  TransitionManifestationResponse,
 } from '@/types/manifestation'
 
 export const useManifestationsStore = defineStore('manifestations', () => {
@@ -36,6 +38,7 @@ export const useManifestationsStore = defineStore('manifestations', () => {
   const loading = ref(false)
   const loadingCatalogs = ref(false)
   const creating = ref(false)
+  const transitioningManifestationId = ref<number | null>(null)
 
   const currentPage = ref(1)
   const lastPage = ref(1)
@@ -88,6 +91,32 @@ export const useManifestationsStore = defineStore('manifestations', () => {
     }
   }
 
+  async function transitionManifestation(
+    manifestationId: number,
+    payload: TransitionManifestationPayload,
+  ): Promise<TransitionManifestationResponse> {
+    transitioningManifestationId.value = manifestationId
+
+    try {
+      const response = await http.post<TransitionManifestationResponse>(
+        `/api/manifestations/${manifestationId}/transition`,
+        payload,
+      )
+
+      const manifestationIndex = manifestations.value.findIndex(
+        (manifestation) => manifestation.id === manifestationId,
+      )
+
+      if (manifestationIndex >= 0) {
+        manifestations.value[manifestationIndex] = response.data.manifestation
+      }
+
+      return response.data
+    } finally {
+      transitioningManifestationId.value = null
+    }
+  }
+
   function clear(): void {
     manifestations.value = []
 
@@ -99,6 +128,7 @@ export const useManifestationsStore = defineStore('manifestations', () => {
       completed: 0,
     }
 
+    transitioningManifestationId.value = null
     currentPage.value = 1
     lastPage.value = 1
     perPage.value = 15
@@ -112,6 +142,7 @@ export const useManifestationsStore = defineStore('manifestations', () => {
     loading,
     loadingCatalogs,
     creating,
+    transitioningManifestationId,
     currentPage,
     lastPage,
     perPage,
@@ -119,6 +150,7 @@ export const useManifestationsStore = defineStore('manifestations', () => {
     fetchCatalogs,
     fetchManifestations,
     createManifestation,
+    transitionManifestation,
     clear,
   }
 })

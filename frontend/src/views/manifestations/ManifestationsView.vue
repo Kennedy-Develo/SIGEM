@@ -4,6 +4,7 @@ import { computed, onMounted, ref } from 'vue'
 
 import ManifestationForm from '@/components/manifestations/ManifestationForm.vue'
 import ManifestationIndicators from '@/components/manifestations/ManifestationIndicators.vue'
+import ManifestationLifecycleActions from '@/components/manifestations/ManifestationLifecycleActions.vue'
 import ManifestationList from '@/components/manifestations/ManifestationList.vue'
 import { useAuthStore } from '@/stores/auth'
 import { useManifestationsStore } from '@/stores/manifestations'
@@ -138,6 +139,21 @@ async function handleCreated(message: string): Promise<void> {
 function handleFailure(message: string): void {
   successMessage.value = ''
   errorMessage.value = message
+}
+
+async function handleLifecycleTransition(
+  manifestation: Manifestation,
+  message: string,
+): Promise<void> {
+  selectedManifestation.value = manifestation
+  successMessage.value = message
+  errorMessage.value = ''
+
+  try {
+    await manifestationsStore.fetchManifestations(activeFilters.value)
+  } catch (error: unknown) {
+    errorMessage.value = resolveErrorMessage(error)
+  }
 }
 
 function openManifestationDetails(manifestation: Manifestation): void {
@@ -308,7 +324,7 @@ onMounted(() => {
       </main>
     </div>
 
-    <v-dialog v-model="detailsDialogOpen" max-width="760">
+    <v-dialog v-model="detailsDialogOpen" max-width="900">
       <v-card v-if="selectedManifestation" class="details-dialog" rounded="xl">
         <v-card-title class="details-dialog__header">
           <div class="details-dialog__icon">
@@ -333,6 +349,16 @@ onMounted(() => {
         <v-divider />
 
         <v-card-text class="details-dialog__body">
+          <v-alert
+            v-if="successMessage"
+            class="mb-5"
+            closable
+            type="success"
+            variant="tonal"
+            @click:close="successMessage = ''"
+          >
+            {{ successMessage }}
+          </v-alert>
           <div class="details-dialog__chips">
             <v-chip color="primary" variant="tonal">
               {{ sourceLabel(selectedManifestation) }}
@@ -440,6 +466,14 @@ onMounted(() => {
               Respondida pela Ouvidoria
             </span>
           </div>
+          <ManifestationLifecycleActions
+            v-if="authStore.user"
+            class="mt-6"
+            :manifestation="selectedManifestation"
+            :user-id="authStore.user.id"
+            :user-role="authStore.user.role"
+            @transitioned="handleLifecycleTransition"
+          />
         </v-card-text>
 
         <v-card-actions class="details-dialog__actions">

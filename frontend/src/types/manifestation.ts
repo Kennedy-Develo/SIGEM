@@ -187,3 +187,35 @@ export interface StoreManifestationResponse {
   message: string
   manifestation: Manifestation
 }
+
+export type ManifestationLifecycleAction =
+  | 'start'
+  | 'extend'
+  | 'forward'
+  | 'answer'
+  | 'complete'
+  | 'archive'
+  | 'reopen'
+
+export interface TransitionManifestationPayload {
+  action: ManifestationLifecycleAction
+  reason?: string | null
+  new_deadline_at?: string | null
+  external_agency?: string | null
+}
+
+export interface TransitionManifestationResponse {
+  message: string
+  manifestation: Manifestation
+}
+
+export interface ManifestationLifecycleOption {
+  value: ManifestationLifecycleAction
+  label: string
+  description: string
+  icon: string
+  color: string
+  requiresReason: boolean
+  requiresDeadline: boolean
+  requiresExternalAgency: boolean
+}
