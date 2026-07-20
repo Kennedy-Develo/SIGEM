@@ -1,6 +1,14 @@
 import type { UserRole, UserStatus } from '@/types/auth'
 
-export type AuditAction = 'user.access_updated'
+export type AuditAction =
+  | 'user.access_updated'
+  | 'manifestation.created'
+  | 'manifestation.updated'
+  | 'manifestation.lifecycle_updated'
+
+export type AuditedSubjectType = 'user' | 'manifestation'
+
+export type AuditedStatus = UserStatus | 'registered' | 'in_progress' | 'completed' | 'archived'
 
 export interface AuditActor {
   id: number
@@ -9,18 +17,25 @@ export interface AuditActor {
 }
 
 export interface AuditSubject {
-  type: string
+  type: AuditedSubjectType | string
   id: number | string | null
   name: string | null
   email: string | null
+  nup?: string | null
 }
 
 export interface AuditValues {
   role?: UserRole
-  status?: UserStatus
+  status?: AuditedStatus
   approved_by?: number | null
   approved_at?: string | null
   blocked_at?: string | null
+  current_deadline_at?: string | null
+  forwarded_to_external_agency_at?: string | null
+  answered_by_ombudsman_at?: string | null
+  completed_at?: string | null
+  archived_at?: string | null
+  external_agency?: string | null
   [key: string]: unknown
 }
 
@@ -28,6 +43,9 @@ export interface AuditMetadata {
   actor_name?: string
   actor_email?: string
   changed_fields?: string[]
+  manifestation_nup?: string
+  lifecycle_action?: string
+  reason?: string
   [key: string]: unknown
 }
 

@@ -33,6 +33,18 @@ const actionOptions = [
     title: 'Acesso de usuário atualizado',
     value: 'user.access_updated',
   },
+  {
+    title: 'Manifestação cadastrada',
+    value: 'manifestation.created',
+  },
+  {
+    title: 'Manifestação atualizada',
+    value: 'manifestation.updated',
+  },
+  {
+    title: 'Ciclo de vida da manifestação atualizado',
+    value: 'manifestation.lifecycle_updated',
+  },
 ]
 
 const perPageOptions = [
@@ -61,15 +73,43 @@ const statusLabels: Record<string, string> = {
   pending: 'Pendente',
   active: 'Ativo',
   blocked: 'Bloqueado',
+  registered: 'Cadastrada',
+  in_progress: 'Em andamento',
+  completed: 'Concluída',
+  archived: 'Arquivada',
 }
 
 const fieldLabels: Record<string, string> = {
   role: 'Perfil',
-  status: 'Status',
+  status: 'Situação',
   approved_by: 'Aprovado por',
   approved_at: 'Aprovado em',
   blocked_at: 'Bloqueado em',
+  current_deadline_at: 'Prazo atual',
+  original_deadline_at: 'Prazo original',
+  started_at: 'Início do atendimento',
+  extended_at: 'Data da prorrogação',
+  forwarded_to_external_agency_at: 'Data de encaminhamento',
+  forwarded_at: 'Data de encaminhamento',
+  external_agency: 'Órgão de interesse',
+  answered_by_ombudsman_at: 'Resposta da Ouvidoria',
+  completed_at: 'Data de conclusão',
+  archived_at: 'Data de arquivamento',
 }
+
+const dateFields = new Set([
+  'approved_at',
+  'blocked_at',
+  'current_deadline_at',
+  'original_deadline_at',
+  'started_at',
+  'extended_at',
+  'forwarded_to_external_agency_at',
+  'forwarded_at',
+  'answered_by_ombudsman_at',
+  'completed_at',
+  'archived_at',
+])
 
 const recordsOnPage = computed(() => auditStore.auditLogs.length)
 
@@ -90,10 +130,16 @@ function formatDate(value: string | null): string {
     return '—'
   }
 
+  const date = new Date(value)
+
+  if (Number.isNaN(date.getTime())) {
+    return value
+  }
+
   return new Intl.DateTimeFormat('pt-BR', {
     dateStyle: 'short',
     timeStyle: 'short',
-  }).format(new Date(value))
+  }).format(date)
 }
 
 function formatFieldName(field: string): string {
@@ -113,11 +159,69 @@ function formatValue(field: string, value: unknown): string {
     return statusLabels[value] ?? value
   }
 
-  if ((field === 'approved_at' || field === 'blocked_at') && typeof value === 'string') {
+  if (dateFields.has(field) && typeof value === 'string') {
     return formatDate(value)
   }
 
+  if (typeof value === 'boolean') {
+    return value ? 'Sim' : 'Não'
+  }
+
+  if (typeof value === 'object') {
+    return JSON.stringify(value)
+  }
+
   return String(value)
+}
+
+function isManifestationSubject(auditLog: AuditLog): boolean {
+  const subjectType = auditLog.subject.type.toLowerCase()
+
+  return subjectType === 'manifestation' || subjectType.includes('manifestation')
+}
+
+function subjectLabel(auditLog: AuditLog): string {
+  if (auditLog.subject.name) {
+    return auditLog.subject.name
+  }
+
+  return isManifestationSubject(auditLog) ? 'Manifestação removida' : 'Usuário removido'
+}
+
+function subjectSecondary(auditLog: AuditLog): string {
+  if (auditLog.subject.email) {
+    return auditLog.subject.email
+  }
+
+  if (auditLog.subject.id !== null) {
+    return `Código ${auditLog.subject.id}`
+  }
+
+  return 'Registro indisponível'
+}
+
+function subjectSectionLabel(auditLog: AuditLog): string {
+  return isManifestationSubject(auditLog) ? 'Manifestação afetada' : 'Usuário afetado'
+}
+
+function subjectIcon(auditLog: AuditLog): string {
+  return isManifestationSubject(auditLog) ? 'mdi-file-document-outline' : 'mdi-account-outline'
+}
+
+function actionIcon(auditLog: AuditLog): string {
+  if (auditLog.action === 'manifestation.created') {
+    return 'mdi-file-document-plus-outline'
+  }
+
+  if (auditLog.action === 'manifestation.updated') {
+    return 'mdi-file-document-edit-outline'
+  }
+
+  if (auditLog.action === 'manifestation.lifecycle_updated') {
+    return 'mdi-source-branch'
+  }
+
+  return 'mdi-account-cog-outline'
 }
 
 function changedFields(auditLog: AuditLog): string[] {
@@ -140,13 +244,16 @@ function changeSummary(auditLog: AuditLog): string {
     return 'Operação registrada'
   }
 
-  const preferredField = fields.find((field) => field === 'status' || field === 'role') ?? fields[0]
+  const preferredFields = ['status', 'current_deadline_at', 'external_agency', 'role']
+
+  const preferredField = preferredFields.find((field) => fields.includes(field)) ?? fields[0]
 
   if (!preferredField) {
     return 'Operação registrada'
   }
 
   const oldValue = formatValue(preferredField, auditLog.old_values?.[preferredField])
+
   const newValue = formatValue(preferredField, auditLog.new_values?.[preferredField])
 
   const remainingChanges = fields.length - 1
@@ -224,7 +331,6 @@ onMounted(() => {
   void loadAuditLogs()
 })
 </script>
-
 <template>
   <v-container class="audit-page py-6 py-md-8" fluid>
     <div class="page-header">
@@ -397,7 +503,7 @@ onMounted(() => {
               <th>Data e hora</th>
               <th>Ação</th>
               <th>Responsável</th>
-              <th>Usuário afetado</th>
+              <th>Registro afetado</th>
               <th>Alteração</th>
               <th class="text-right">Detalhes</th>
             </tr>
@@ -415,12 +521,11 @@ onMounted(() => {
 
               <td>
                 <v-chip color="primary" variant="tonal" size="small">
-                  <v-icon icon="mdi-account-cog-outline" start size="16" />
+                  <v-icon :icon="actionIcon(auditLog)" start size="16" />
 
                   {{ auditLog.action_label }}
                 </v-chip>
               </td>
-
               <td>
                 <div class="person-cell">
                   <v-avatar color="primary" variant="tonal" size="38">
@@ -438,25 +543,23 @@ onMounted(() => {
                   </div>
                 </div>
               </td>
-
               <td>
                 <div class="person-cell">
                   <v-avatar color="secondary" variant="tonal" size="38">
-                    <v-icon icon="mdi-account-outline" size="20" />
+                    <v-icon :icon="subjectIcon(auditLog)" size="20" />
                   </v-avatar>
 
                   <div>
                     <strong>
-                      {{ auditLog.subject.name ?? 'Registro removido' }}
+                      {{ subjectLabel(auditLog) }}
                     </strong>
 
                     <span>
-                      {{ auditLog.subject.email ?? `Código ${auditLog.subject.id}` }}
+                      {{ subjectSecondary(auditLog) }}
                     </span>
                   </div>
                 </div>
               </td>
-
               <td>
                 <span class="change-summary">
                   {{ changeSummary(auditLog) }}
@@ -551,14 +654,16 @@ onMounted(() => {
 
             <v-col cols="12">
               <div class="detail-section">
-                <p class="detail-section__label">Usuário afetado</p>
+                <p class="detail-section__label">
+                  {{ subjectSectionLabel(selectedAuditLog) }}
+                </p>
 
                 <strong>
-                  {{ selectedAuditLog.subject.name ?? 'Registro removido' }}
+                  {{ subjectLabel(selectedAuditLog) }}
                 </strong>
 
                 <span>
-                  {{ selectedAuditLog.subject.email ?? 'E-mail indisponível' }}
+                  {{ subjectSecondary(selectedAuditLog) }}
                 </span>
               </div>
             </v-col>

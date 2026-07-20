@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\ListAuditLogsRequest;
 use App\Models\AuditLog;
+use App\Models\Manifestation;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
@@ -12,13 +13,15 @@ use Illuminate\Http\JsonResponse;
 class AuditLogController extends Controller
 {
     /**
-     * List audit records for administrative monitoring.
+     * Lista os registros de auditoria para acompanhamento administrativo.
      */
     public function index(
         ListAuditLogsRequest $request,
     ): JsonResponse {
         $filters = $request->validated();
+
         $userMorphType = (new User)->getMorphClass();
+        $manifestationMorphType = (new Manifestation)->getMorphClass();
 
         $auditLogs = AuditLog::query()
             ->with([
@@ -30,11 +33,15 @@ class AuditLogController extends Controller
                 function (
                     Builder $query,
                     string $search,
-                ) use ($userMorphType): void {
+                ) use (
+                    $userMorphType,
+                    $manifestationMorphType,
+                ): void {
                     $query->where(
                         function (Builder $query) use (
                             $search,
                             $userMorphType,
+                            $manifestationMorphType,
                         ): void {
                             $query
                                 ->whereHas(
@@ -67,9 +74,7 @@ class AuditLogController extends Controller
                                             )
                                             ->whereHasMorph(
                                                 'subject',
-                                                [
-                                                    User::class,
-                                                ],
+                                                [User::class],
                                                 function (
                                                     Builder $query,
                                                 ) use ($search): void {
@@ -81,6 +86,37 @@ class AuditLogController extends Controller
                                                         )
                                                         ->orWhere(
                                                             'email',
+                                                            'like',
+                                                            "%{$search}%",
+                                                        );
+                                                },
+                                            );
+                                    },
+                                )
+                                ->orWhere(
+                                    function (Builder $query) use (
+                                        $search,
+                                        $manifestationMorphType,
+                                    ): void {
+                                        $query
+                                            ->where(
+                                                'subject_type',
+                                                $manifestationMorphType,
+                                            )
+                                            ->whereHasMorph(
+                                                'subject',
+                                                [Manifestation::class],
+                                                function (
+                                                    Builder $query,
+                                                ) use ($search): void {
+                                                    $query
+                                                        ->where(
+                                                            'nup',
+                                                            'like',
+                                                            "%{$search}%",
+                                                        )
+                                                        ->orWhere(
+                                                            'summary',
                                                             'like',
                                                             "%{$search}%",
                                                         );
@@ -158,32 +194,12 @@ class AuditLogController extends Controller
 
         $auditLogs->through(
             function (AuditLog $auditLog): array {
-                $subject = $auditLog->subject;
-
                 return [
                     'id' => $auditLog->id,
                     'action' => $auditLog->action->value,
                     'action_label' => $auditLog->action->label(),
-                    'actor' => $auditLog->actor
-                        ? [
-                            'id' => $auditLog->actor->id,
-                            'name' => $auditLog->actor->name,
-                            'email' => $auditLog->actor->email,
-                        ]
-                        : null,
-                    'subject' => $subject instanceof User
-                        ? [
-                            'type' => 'user',
-                            'id' => $subject->id,
-                            'name' => $subject->name,
-                            'email' => $subject->email,
-                        ]
-                        : [
-                            'type' => $auditLog->subject_type,
-                            'id' => $auditLog->subject_id,
-                            'name' => null,
-                            'email' => null,
-                        ],
+                    'actor' => $this->formatActor($auditLog),
+                    'subject' => $this->formatSubject($auditLog),
                     'old_values' => $auditLog->old_values,
                     'new_values' => $auditLog->new_values,
                     'metadata' => $auditLog->metadata,
@@ -197,5 +213,88 @@ class AuditLogController extends Controller
         );
 
         return response()->json($auditLogs);
+    }
+
+    /**
+     * Formata o responsável pela ação auditada.
+     *
+     * @return array{id: int, name: string, email: string}|null
+     */
+    private function formatActor(
+        AuditLog $auditLog,
+    ): ?array {
+        if (! $auditLog->actor) {
+            return null;
+        }
+
+        return [
+            'id' => $auditLog->actor->id,
+            'name' => $auditLog->actor->name,
+            'email' => $auditLog->actor->email,
+        ];
+    }
+
+    /**
+     * Formata o registro afetado pela ação auditada.
+     *
+     * @return array{
+     *     type: string,
+     *     id: int|string|null,
+     *     name: string|null,
+     *     email: string|null,
+     *     nup: string|null
+     * }
+     */
+    private function formatSubject(
+        AuditLog $auditLog,
+    ): array {
+        $subject = $auditLog->subject;
+
+        if ($subject instanceof User) {
+            return [
+                'type' => 'user',
+                'id' => $subject->id,
+                'name' => $subject->name,
+                'email' => $subject->email,
+                'nup' => null,
+            ];
+        }
+
+        if ($subject instanceof Manifestation) {
+            return [
+                'type' => 'manifestation',
+                'id' => $subject->id,
+                'name' => "Manifestação {$subject->nup}",
+                'email' => null,
+                'nup' => $subject->nup,
+            ];
+        }
+
+        return [
+            'type' => $this->resolveSubjectType(
+                $auditLog->subject_type,
+            ),
+            'id' => $auditLog->subject_id,
+            'name' => null,
+            'email' => null,
+            'nup' => null,
+        ];
+    }
+
+    /**
+     * Converte o nome interno do modelo em um identificador para o frontend.
+     */
+    private function resolveSubjectType(
+        ?string $subjectType,
+    ): string {
+        return match ($subjectType) {
+            User::class,
+            (new User)->getMorphClass() => 'user',
+
+            Manifestation::class,
+            (new Manifestation)->getMorphClass() => 'manifestation',
+
+            default => $subjectType ?? 'unknown',
+        };
     }
 }
