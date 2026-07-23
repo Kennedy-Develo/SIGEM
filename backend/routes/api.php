@@ -42,6 +42,13 @@ Route::middleware('auth:sanctum')->group(function (): void {
         'transition'])
         ->name('manifestations.transition');
 
+    Route::delete('/manifestations/{manifestation}', [ManifestationController::class, 'trash'])
+        ->name('manifestations.trash');
+
+    Route::post('/manifestations/{manifestation}/restore', [ManifestationController::class, 'restore'])
+        ->withTrashed()
+        ->name('manifestations.restore');
+
     Route::prefix('admin')
         ->middleware('admin')
         ->group(function (): void {
@@ -59,5 +66,6 @@ Route::middleware('auth:sanctum')->group(function (): void {
                 AuditLogController::class,
                 'index',
             ])->name('admin.audit-logs.index');
+
         });
 });
