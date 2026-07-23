@@ -10,10 +10,11 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Manifestation extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     protected $fillable = [
         'nup',
@@ -55,6 +56,7 @@ class Manifestation extends Model
             'answered_by_ombudsman_at' => 'datetime',
             'completed_at' => 'datetime',
             'archived_at' => 'datetime',
+            'deleted_at' => 'datetime',
         ];
     }
 
