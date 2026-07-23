@@ -52,6 +52,86 @@ class ManifestationService
         });
     }
 
+    public function trash(
+        Manifestation $manifestation,
+        User $actor,
+        string $reason,
+    ): Manifestation {
+        return DB::transaction(function () use (
+            $manifestation,
+            $actor,
+            $reason,
+        ): Manifestation {
+            $oldValues = [
+                'deleted_at' => $manifestation->deleted_at?->toISOString(),
+            ];
+
+            $manifestation->forceFill([
+                'updated_by_id' => $actor->id,
+            ])->save();
+
+            $manifestation->delete();
+
+            $manifestation->refresh();
+
+            $this->auditLogger->record(
+                action: AuditAction::ManifestationTrashed,
+                actor: $actor,
+                subject: $manifestation,
+                oldValues: $oldValues,
+                newValues: [
+                    'deleted_at' => $manifestation->deleted_at?->toISOString(),
+                ],
+                metadata: [
+                    'reason' => $reason,
+                    'nup' => $manifestation->nup,
+                    'changed_fields' => ['deleted_at'],
+                ],
+            );
+
+            return $manifestation;
+        });
+    }
+
+    public function restore(
+        Manifestation $manifestation,
+        User $actor,
+        ?string $reason = null,
+    ): Manifestation {
+        return DB::transaction(function () use (
+            $manifestation,
+            $actor,
+        ): Manifestation {
+            $oldValues = [
+                'deleted_at' => $manifestation->deleted_at?->toISOString(),
+            ];
+
+            $manifestation->restore();
+
+            $manifestation->forceFill([
+                'updated_by_id' => $actor->id,
+            ])->save();
+
+            $manifestation->refresh();
+
+            $this->auditLogger->record(
+                action: AuditAction::ManifestationRestored,
+                actor: $actor,
+                subject: $manifestation,
+                oldValues: $oldValues,
+                newValues: [
+                    'deleted_at' => null,
+                ],
+                metadata: [
+                    'nup' => $manifestation->nup,
+                    'changed_fields' => ['deleted_at'],
+                ],
+            );
+
+            return $manifestation;
+        });
+    }
+
     /**
      * Atualiza os dados gerais de uma manifestação.
      *

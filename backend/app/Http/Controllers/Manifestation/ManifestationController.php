@@ -2,12 +2,13 @@
 
 namespace App\Http\Controllers\Manifestation;
 
-use App\Enums\ManifestationLifecycleAction;
 use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Manifestation\ListManifestationsRequest;
+use App\Http\Requests\Manifestation\RestoreManifestationRequest;
 use App\Http\Requests\Manifestation\StoreManifestationRequest;
 use App\Http\Requests\Manifestation\TransitionManifestationRequest;
+use App\Http\Requests\Manifestation\TrashManifestationRequest;
 use App\Http\Requests\Manifestation\UpdateManifestationRequest;
 use App\Models\Manifestation;
 use App\Models\User;
@@ -138,24 +139,48 @@ class ManifestationController extends Controller
         TransitionManifestationRequest $request,
         Manifestation $manifestation,
     ): JsonResponse {
-        $actor = $request->user();
-
-        if (! $actor instanceof User) {
-            abort(401, 'Usuário não autenticado.');
-        }
-
-        $validated = $request->validated();
-
-        $action = ManifestationLifecycleAction::from($validated['action']);
-
         $manifestation = $this->manifestationService->transition(
-            $manifestation,
-            $validated,
-            $actor,
+            manifestation: $manifestation,
+            actor: $request->user(),
+            data: $request->validated(),
         );
 
         return response()->json([
-            'message' => $action->label().' realizada com sucesso.',
+            'message' => 'Ciclo de vida da manifestação atualizado com sucesso.',
+            'manifestation' => $manifestation,
+        ]);
+    }
+
+    public function trash(
+        TrashManifestationRequest $request,
+        Manifestation $manifestation,
+    ): JsonResponse {
+        $manifestation = $this->manifestationService->trash(
+            manifestation: $manifestation,
+            actor: $request->user(),
+            reason: $request->validated('reason'),
+        );
+
+        return response()->json([
+            'message' => 'Manifestação enviada para a lixeira com sucesso.',
+            'manifestation' => $manifestation,
+        ]);
+    }
+
+    public function restore(
+        RestoreManifestationRequest $request,
+        int $manifestation,
+    ): JsonResponse {
+        $manifestation = Manifestation::withTrashed()->findOrFail($manifestation);
+
+        $manifestation = $this->manifestationService->restore(
+            manifestation: $manifestation,
+            actor: $request->user(),
+            reason: $request->validated('reason'),
+        );
+
+        return response()->json([
+            'message' => 'Manifestação restaurada com sucesso.',
             'manifestation' => $manifestation,
         ]);
     }

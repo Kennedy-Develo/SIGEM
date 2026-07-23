@@ -2,28 +2,27 @@
 
 namespace App\Http\Requests\Manifestation;
 
-use Illuminate\Contracts\Validation\ValidationRule;
+use App\Enums\UserRole;
 use Illuminate\Foundation\Http\FormRequest;
 
 class RestoreManifestationRequest extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     */
     public function authorize(): bool
     {
-        return false;
+        $user = $this->user();
+
+        if ($user === null || ! $user->isActive()) {
+            return false;
+        }
+
+        return in_array($user->role, [
+            UserRole::Administrator,
+            UserRole::Manager,
+        ], true);
     }
 
-    /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array<string, ValidationRule|array<mixed>|string>
-     */
     public function rules(): array
     {
-        return [
-            //
-        ];
+        return [];
     }
 }
