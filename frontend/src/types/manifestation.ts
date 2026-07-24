@@ -113,6 +113,7 @@ export interface Manifestation {
   answered_by_ombudsman_at: string | null
   completed_at: string | null
   archived_at: string | null
+  deleted_at: string | null
   created_at: string
   updated_at: string
   subject: ManifestationSubject
@@ -150,6 +151,7 @@ export interface ManifestationFilters {
   sort_direction?: SortDirection
   per_page?: 10 | 15 | 25 | 50 | 100
   page?: number
+  trash?: 'active' | 'with' | 'only'
 }
 
 export interface ManifestationPagination {

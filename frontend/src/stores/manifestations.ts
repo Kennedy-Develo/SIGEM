@@ -91,6 +91,48 @@ export const useManifestationsStore = defineStore('manifestations', () => {
     }
   }
 
+  async function updateManifestation(
+  manifestationId: number,
+  payload: Partial<StoreManifestationPayload>,
+): Promise<Manifestation> {
+  const { data } = await http.patch<{
+    message: string
+    manifestation: Manifestation
+  }>(`/manifestations/${manifestationId}`, payload)
+
+  return data.manifestation
+}
+
+async function trashManifestation(
+  manifestationId: number,
+  reason: string,
+): Promise<Manifestation> {
+  const { data } = await http.delete<{
+    message: string
+    manifestation: Manifestation
+  }>(`/manifestations/${manifestationId}`, {
+    data: {
+      reason,
+    },
+  })
+
+  return data.manifestation
+}
+
+async function restoreManifestation(
+  manifestationId: number,
+  reason?: string,
+): Promise<Manifestation> {
+  const { data } = await http.post<{
+    message: string
+    manifestation: Manifestation
+  }>(`/manifestations/${manifestationId}/restore`, {
+    reason,
+  })
+
+  return data.manifestation
+}
+
   async function transitionManifestation(
     manifestationId: number,
     payload: TransitionManifestationPayload,
@@ -150,6 +192,9 @@ export const useManifestationsStore = defineStore('manifestations', () => {
     fetchCatalogs,
     fetchManifestations,
     createManifestation,
+    updateManifestation,
+    trashManifestation,
+    restoreManifestation,
     transitionManifestation,
     clear,
   }

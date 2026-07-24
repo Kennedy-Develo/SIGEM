@@ -156,6 +156,52 @@ async function handleLifecycleTransition(
   }
 }
 
+async function handleTrashManifestation(
+  manifestation: Manifestation,
+  reason: string,
+): Promise<void> {
+  selectedManifestation.value = manifestation
+  successMessage.value = ''
+  errorMessage.value = ''
+
+  try {
+    const updatedManifestation = await manifestationsStore.trashManifestation(
+      manifestation.id,
+      reason,
+    )
+
+    selectedManifestation.value = updatedManifestation
+    successMessage.value = 'Manifestação enviada para a lixeira com sucesso.'
+
+    await manifestationsStore.fetchManifestations(activeFilters.value)
+  } catch (error: unknown) {
+    errorMessage.value = resolveErrorMessage(error)
+  }
+}
+
+async function handleRestoreManifestation(
+  manifestation: Manifestation,
+  reason?: string,
+): Promise<void> {
+  selectedManifestation.value = manifestation
+  successMessage.value = ''
+  errorMessage.value = ''
+
+  try {
+    const updatedManifestation = await manifestationsStore.restoreManifestation(
+      manifestation.id,
+      reason,
+    )
+
+    selectedManifestation.value = updatedManifestation
+    successMessage.value = 'Manifestação restaurada com sucesso.'
+
+    await manifestationsStore.fetchManifestations(activeFilters.value)
+  } catch (error: unknown) {
+    errorMessage.value = resolveErrorMessage(error)
+  }
+}
+
 function openManifestationDetails(manifestation: Manifestation): void {
   selectedManifestation.value = manifestation
   detailsDialogOpen.value = true
@@ -473,6 +519,8 @@ onMounted(() => {
             :user-id="authStore.user.id"
             :user-role="authStore.user.role"
             @transitioned="handleLifecycleTransition"
+            @trash="handleTrashManifestation"
+            @restore="handleRestoreManifestation"
           />
         </v-card-text>
 
