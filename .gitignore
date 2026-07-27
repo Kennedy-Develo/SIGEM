@@ -1,2 +1,3 @@
 # Dependências e caches criados na raiz
 /node_modules/
+/frontend/.env

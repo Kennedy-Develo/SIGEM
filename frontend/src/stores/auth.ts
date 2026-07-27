@@ -27,9 +27,12 @@ export const useAuthStore = defineStore('auth', () => {
     loading.value = true
 
     try {
-      await http.get('/sanctum/csrf-cookie')
+      await http.get('http://localhost:8000/sanctum/csrf-cookie')
 
-      const response = await http.post<LoginResponse>('/login', credentials)
+      const response = await http.post<LoginResponse>(
+  'http://localhost:8000/login',
+  credentials,
+)
 
       user.value = response.data.user
       initialized.value = true
@@ -44,7 +47,7 @@ export const useAuthStore = defineStore('auth', () => {
     loading.value = true
 
     try {
-      await http.get('/sanctum/csrf-cookie')
+      await http.get('http://localhost:8000/sanctum/csrf-cookie')
 
       const response = await http.post<RegisterResponse>('/register', credentials)
 
@@ -60,7 +63,7 @@ export const useAuthStore = defineStore('auth', () => {
     loading.value = true
 
     try {
-      await http.get('/sanctum/csrf-cookie')
+      await http.get('http://localhost:8000/sanctum/csrf-cookie')
 
       const response = await http.post<ForgotPasswordResponse>('/forgot-password', credentials)
 
@@ -76,7 +79,7 @@ export const useAuthStore = defineStore('auth', () => {
     loading.value = true
 
     try {
-      await http.get('/sanctum/csrf-cookie')
+      await http.get('http://localhost:8000/sanctum/csrf-cookie')
 
       const response = await http.post<ResetPasswordResponse>('/reset-password', credentials)
 
