@@ -26,6 +26,8 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   transitioned: [manifestation: Manifestation, message: string]
+  trash: [manifestation: Manifestation, reason: string]
+  restore: [manifestation: Manifestation, reason: string]
 }>()
 
 const manifestationsStore = useManifestationsStore()
@@ -37,6 +39,37 @@ const newDeadlineAt = ref('')
 const externalAgency = ref('')
 const errorMessage = ref('')
 const formReference = ref<FormReference | null>(null)
+const trashDialogOpen = ref(false)
+const trashReason = ref('')
+const trashAction = ref<'trash' | 'restore'>('trash')
+
+function openTrashDialog(action: 'trash' | 'restore'): void {
+  trashAction.value = action
+  trashReason.value = ''
+  trashDialogOpen.value = true
+}
+
+function closeTrashDialog(): void {
+  trashDialogOpen.value = false
+  trashReason.value = ''
+}
+
+function confirmTrashAction(): void {
+  const normalizedReason = trashReason.value.trim()
+
+  if (!normalizedReason) {
+    errorMessage.value = 'Informe o motivo desta ação.'
+    return
+  }
+
+  if (trashAction.value === 'trash') {
+    emit('trash', props.manifestation, normalizedReason)
+  } else {
+    emit('restore', props.manifestation, normalizedReason)
+  }
+
+  closeTrashDialog()
+}
 
 const lifecycleOptions: ManifestationLifecycleOption[] = [
   {
@@ -285,7 +318,32 @@ async function submitTransition(): Promise<void> {
         {{ option.label }}
       </v-btn>
     </div>
+<div
+  v-if="userRole === 'administrator' || userRole === 'manager'"
+  class="mt-4"
+>
+  <v-btn
+    v-if="!manifestation.deleted_at"
+    color="error"
+    variant="tonal"
+    prepend-icon="mdi-delete-outline"
+    block
+    @click="openTrashDialog('trash')"
+  >
+    Enviar para a lixeira
+  </v-btn>
 
+  <v-btn
+    v-else
+    color="info"
+    variant="tonal"
+    prepend-icon="mdi-restore"
+    block
+    @click="openTrashDialog('restore')"
+  >
+    Restaurar manifestação
+  </v-btn>
+</div>
     <v-dialog v-model="dialogOpen" max-width="620" persistent>
       <v-card v-if="selectedAction" class="lifecycle-dialog" rounded="xl">
         <v-card-title class="lifecycle-dialog__header">
@@ -378,7 +436,52 @@ async function submitTransition(): Promise<void> {
         </v-card-actions>
       </v-card>
     </v-dialog>
-  </section>
+    <v-dialog v-model="trashDialogOpen" max-width="520" persistent>
+      <v-card rounded="xl">
+        <v-card-title>
+          {{
+            trashAction === 'trash'
+              ? 'Enviar para a lixeira'
+              : 'Restaurar manifestação'
+          }}
+        </v-card-title>
+
+        <v-card-text>
+          <v-alert type="warning" variant="tonal" class="mb-4">
+            {{
+              trashAction === 'trash'
+                ? 'A manifestação deixará de aparecer na lista principal.'
+                : 'A manifestação voltará para a lista principal.'
+            }}
+          </v-alert>
+
+          <v-textarea
+            v-model="trashReason"
+            label="Motivo"
+            maxlength="2000"
+            counter
+            rows="4"
+            autofocus
+          />
+        </v-card-text>
+
+        <v-card-actions>
+          <v-spacer />
+
+          <v-btn variant="text" @click="closeTrashDialog">
+            Cancelar
+          </v-btn>
+
+          <v-btn
+            :color="trashAction === 'trash' ? 'error' : 'primary'"
+            @click="confirmTrashAction"
+          >
+            Confirmar
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+   </section>
 </template>
 
 <style scoped>

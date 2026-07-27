@@ -49,7 +49,7 @@ export const useManifestationsStore = defineStore('manifestations', () => {
     loadingCatalogs.value = true
 
     try {
-      const response = await http.get<ManifestationCatalogs>('/api/manifestations/catalogs')
+      const response = await http.get<ManifestationCatalogs>('/manifestations/catalogs')
 
       catalogs.value = response.data
     } finally {
@@ -61,7 +61,7 @@ export const useManifestationsStore = defineStore('manifestations', () => {
     loading.value = true
 
     try {
-      const response = await http.get<ManifestationListResponse>('/api/manifestations', {
+      const response = await http.get<ManifestationListResponse>('/manifestations', {
         params: filters,
       })
 
@@ -83,7 +83,7 @@ export const useManifestationsStore = defineStore('manifestations', () => {
     creating.value = true
 
     try {
-      const response = await http.post<StoreManifestationResponse>('/api/manifestations', payload)
+      const response = await http.post<StoreManifestationResponse>('/manifestations', payload)
 
       return response.data
     } finally {

@@ -160,20 +160,24 @@ async function handleTrashManifestation(
   manifestation: Manifestation,
   reason: string,
 ): Promise<void> {
-  selectedManifestation.value = manifestation
   successMessage.value = ''
   errorMessage.value = ''
 
   try {
-    const updatedManifestation = await manifestationsStore.trashManifestation(
+    await manifestationsStore.trashManifestation(
       manifestation.id,
       reason,
     )
 
-    selectedManifestation.value = updatedManifestation
-    successMessage.value = 'Manifestação enviada para a lixeira com sucesso.'
+    detailsDialogOpen.value = false
+    selectedManifestation.value = null
 
-    await manifestationsStore.fetchManifestations(activeFilters.value)
+    await manifestationsStore.fetchManifestations(
+      activeFilters.value,
+    )
+
+    successMessage.value =
+      'Manifestação enviada para a lixeira com sucesso.'
   } catch (error: unknown) {
     errorMessage.value = resolveErrorMessage(error)
   }
