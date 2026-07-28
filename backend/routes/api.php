@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\AuditLogController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Manifestation\ManifestationCatalogController;
 use App\Http\Controllers\Manifestation\ManifestationController;
+use App\Http\Controllers\Manifestation\ManifestationTrashController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -11,6 +12,11 @@ Route::middleware('auth:sanctum')->group(function (): void {
     Route::get('/user', function (Request $request) {
         return $request->user();
     });
+
+    Route::get('/manifestations/trash', [
+        ManifestationTrashController::class,
+        'index',
+    ])->name('manifestations.trash.index');
 
     Route::get(
         '/manifestations/catalogs',
