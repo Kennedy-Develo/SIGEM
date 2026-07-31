@@ -102,6 +102,13 @@ async function handleLogout(): Promise<void> {
         />
 
         <v-list-item
+          :to="{ name: 'admin-manifestation-trash' }"
+           prepend-icon="mdi-trash-can-outline"
+           rounded="lg"
+           title="Lixeira"
+        />
+
+        <v-list-item
           :to="{ name: 'admin-audit' }"
           prepend-icon="mdi-clipboard-text-clock-outline"
           rounded="lg"

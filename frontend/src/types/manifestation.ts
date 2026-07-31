@@ -169,6 +169,8 @@ export interface ManifestationListResponse {
   indicators: ManifestationIndicators
 }
 
+export type TrashedManifestationListResponse = ManifestationPagination
+
 export interface StoreManifestationPayload {
   nup: string
   source: ManifestationSource

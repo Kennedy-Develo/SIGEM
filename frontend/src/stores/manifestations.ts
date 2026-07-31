@@ -13,9 +13,17 @@ import type {
   StoreManifestationResponse,
   TransitionManifestationPayload,
   TransitionManifestationResponse,
+  TrashedManifestationListResponse,
 } from '@/types/manifestation'
 
 export const useManifestationsStore = defineStore('manifestations', () => {
+  const trashedManifestations = ref<Manifestation[]>([])
+  const trashLoading = ref(false)
+  const trashCurrentPage = ref(1)
+  const trashLastPage = ref(1)
+  const trashPerPage = ref(15)
+  const trashTotal = ref(0)
+
   const manifestations = ref<Manifestation[]>([])
 
   const catalogs = ref<ManifestationCatalogs>({
@@ -74,6 +82,33 @@ export const useManifestationsStore = defineStore('manifestations', () => {
       total.value = response.data.manifestations.total
     } finally {
       loading.value = false
+    }
+  }
+
+    async function fetchTrashedManifestations(
+    page = 1,
+    perPage: 15 | 25 | 50 = 15,
+  ): Promise<void> {
+    trashLoading.value = true
+
+    try {
+      const response = await http.get<TrashedManifestationListResponse>(
+        '/manifestations/trash',
+        {
+          params: {
+            page,
+            per_page: perPage,
+          },
+        },
+      )
+
+      trashedManifestations.value = response.data.data
+      trashCurrentPage.value = response.data.current_page
+      trashLastPage.value = response.data.last_page
+      trashPerPage.value = response.data.per_page
+      trashTotal.value = response.data.total
+    } finally {
+      trashLoading.value = false
     }
   }
 
@@ -197,5 +232,12 @@ async function restoreManifestation(
     restoreManifestation,
     transitionManifestation,
     clear,
+    trashedManifestations,
+    trashLoading,
+    trashCurrentPage,
+    trashLastPage,
+    trashPerPage,
+    trashTotal,
+    fetchTrashedManifestations,
   }
 })

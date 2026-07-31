@@ -64,22 +64,31 @@ const router = createRouter({
           },
         },
         {
-          path: 'manifestacoes',
-          name: 'manifestations',
-          component: () => import('@/views/manifestations/ManifestationsView.vue'),
-          meta: {
-            title: 'Manifestações | SIGEM',
-          },
-        },
-        {
-          path: 'administracao/usuarios',
-          name: 'admin-users',
-          component: () => import('@/views/admin/UsersView.vue'),
-          meta: {
-            title: 'Gestão de usuários | SIGEM',
-            requiresAdmin: true,
-          },
-        },
+  path: 'manifestacoes',
+  name: 'manifestations',
+  component: () => import('@/views/manifestations/ManifestationsView.vue'),
+  meta: {
+    title: 'Manifestações | SIGEM',
+  },
+},
+{
+  path: 'administracao/manifestacoes/lixeira',
+  name: 'admin-manifestation-trash',
+  component: () => import('@/views/manifestations/ManifestationTrashView.vue'),
+  meta: {
+    title: 'Lixeira de manifestações | SIGEM',
+    requiresAdmin: true,
+  },
+},
+{
+  path: 'administracao/usuarios',
+  name: 'admin-users',
+  component: () => import('@/views/admin/UsersView.vue'),
+  meta: {
+    title: 'Gestão de usuários | SIGEM',
+    requiresAdmin: true,
+  },
+},
         {
           path: 'administracao/auditoria',
           name: 'admin-audit',
